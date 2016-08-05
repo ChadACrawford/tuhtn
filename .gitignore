@@ -1,0 +1,19 @@
+# -*- mode: gitignore; -*-
+
+# Gradle
+.gradle
+
+# Idea
+.idea
+*.ipr
+*.iws
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*

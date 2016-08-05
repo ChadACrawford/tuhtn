@@ -2,6 +2,10 @@
 apply plugin: 'idea'
 apply plugin: 'scala'
 
+wrapper {
+  gradleVersion = 2.14
+}
+
 sourceSets {
     main {
         scala {

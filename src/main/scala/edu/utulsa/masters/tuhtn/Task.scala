@@ -1,22 +1,35 @@
 package edu.utulsa.masters.tuhtn
 
+import edu.utulsa.masters.tuhtn.CompoundTask.CallTask
+
 import scala.collection.mutable
 
-private abstract class Task(val name: String) {
-  def precondition(state: State)
-  def postcondition(state: State)
+abstract class Arguments
+
+private abstract class Task(val name: Symbol) {
+  def precondition(state: CState): UState
 }
 
-abstract case class PrimitiveTask(override val name: String) extends Task(name)
+object Task {
 
-abstract case class CompoundTask(override val name: String) extends Task(name) {
-  override def precondition(implicit state: State)
-  override def postcondition(implicit state: State): State = ???
+}
 
-  private val tasks = mutable.ListBuffer[Task]()
+abstract case class PrimitiveTask(override val name: Symbol) extends Task(name) {
+  def postcondition(state: UState): UState
+}
 
-  def addTask(task: Task): this.type = {
-    tasks.append(task)
-    this
+abstract case class CompoundTask(override val name: Symbol) extends Task(name) {
+  private val subtasks = mutable.ListBuffer[CallTask]()
+  def getSubtasks: Seq[CallTask] = subtasks
+}
+
+object CompoundTask {
+  class CallTask private (val name: Symbol, val args: Seq[Any])
+  class CallTaskWithDependencies private (override val name: Symbol, override val args: Seq[Any], val dependencies: Seq[Symbol]) extends CallTask
+  protected def call(name: Symbol)(args: Any*)(implicit task: CompoundTask): Unit = {
+    task.subtasks append new CallTask(name, args)
+  }
+  protected def call(name: Symbol)(args: Any*)(dependencies: Symbol*)(implicit task: CompoundTask): Unit = {
+    task.subtasks append new CallTaskWithDependencies(name, args, dependencies)
   }
 }

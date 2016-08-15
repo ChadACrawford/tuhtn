@@ -2,35 +2,36 @@ package edu.utulsa.masters.tuhtn
 
 import scala.collection.mutable
 
-abstract class State {
+abstract class Environment {
+  def set[T](variable: Variable[T, _], value: T): Environment
+  def get[T](variable: Variable[T, _]): T
+}
 
-  def set[T](variable: Variable[T], value: T): State
-  def get[T](variable: Variable[T]): T
-
+abstract class State extends Environment[State] {
+  override def set[T](variable: Variable[T, State], value: T): State
+  override def get[T](variable: Variable[T, State]): T
 }
 
 object State {
-
-  def $[T](variable: Variable[T])(implicit state: State): T = state.get(variable)
-
+  def $[T](variable: Variable[T, State])(implicit state: State): T = state.get(variable)
 }
 
 /**
   * Constant state.
   */
-class CState(val variables: Map[Variable[_], Any]) extends State {
+class CState(val variables: Map[Variable[_, State], Any]) extends State {
 
-  override def set[T](variable: Variable[T], value: T): State = {
+  override def set[T](variable: Variable[T, State], value: T): State = {
     variable match {
-      case svar: Variable[T] => new CState (Map (variables.toSeq: _*) += (svar -> value) )
+      case svar: Variable[T, State] => new CState (Map (variables.toSeq: _*) += (svar -> value) )
     }
   }
 
-  override def get[T](variable: Variable[T]): T = {
+  override def get[T](variable: Variable[T, State]): T = {
     if(variables.contains(variable))
       return variables.get(variable).asInstanceOf[T]
     else
-      throw new NullPointerException(s"Variable '${variable.name}' has no value.")
+      throw new NullPointerException(s"Variable has no value.")
   }
 
 }
@@ -42,9 +43,9 @@ class CState(val variables: Map[Variable[_], Any]) extends State {
   */
 class UState(val parent: CState) extends State {
 
-  val tmpVars: mutable.Map[Variable[_], Any] = mutable.Map()
+  val tmpVars: mutable.Map[Variable[_, State], Any] = mutable.Map()
 
-  override def get[T](variable: Variable[T]): T = {
+  override def get[T](variable: Variable[T, State]): T = {
     if(tmpVars.contains(variable)) {
       tmpVars(variable).asInstanceOf[T]
     }
@@ -53,19 +54,33 @@ class UState(val parent: CState) extends State {
     }
   }
 
-  override def set[T](variable: Variable[T], value: T): State = {
+  override def set[T](variable: Variable[T, State], value: T): State = {
     tmpVars(variable) = value
     this
   }
 
-  def stateMap: Map[Variable[_], Any] = {
+  def stateMap: Map[Variable[_, State], Any] = {
     tmpVars
-      .filter{ case (v: Variable[_], a: Any) => parent.variables.contains(v) }
+      .filter{ case (v: Variable[_, State], a: Any) => parent.variables.contains(v) }
       .toMap
   }
 
   def update: CState = {
     new CState(parent.variables ++ stateMap)
+  }
+
+}
+
+class Arguments extends Environment[Arguments] {
+
+  val args = mutable.Map[Variable[_, Arguments], Any]()
+
+  override def set[T](variable: Variable[T, Arguments], value: T): Environment = {
+    args(variable) = value
+    this
+  }
+  override def get[T](variable: Variable[T, Arguments]): T = {
+    args(variable).asInstanceOf[T]
   }
 
 }

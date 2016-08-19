@@ -2,15 +2,15 @@ package edu.utulsa.masters.tuhtn
 
 import scala.collection.mutable
 
-class Variable[Type, Context <: Environment] {
+class Variable[Type, Context <: Environment[Context]] {
   import Variable._
 
   def get(implicit state: Context): Type = state.get(this)
-  def ~(that: Type)(implicit state: UState): State = state.set(this, that)
-  def ~+(that: Type)(implicit state: UState, op: AddOp[Type]): State = state.set(this, op.add(get, that))
-  def ~-(that: Type)(implicit state: UState, op: SubOp[Type]): State = state.set(this, op.sub(get, that))
-  def ~/(that: Type)(implicit state: UState, op: DivOp[Type]): State = state.set(this, op.div(get, that))
-  def ~*(that: Type)(implicit state: UState, op: MulOp[Type]): State = state.set(this, op.mul(get, that))
+  def ~(that: Type)(implicit state: Context): Context = state.set(this, that)
+  def ~+(that: Type)(implicit state: Context, op: AddOp[Type]): Context = state.set(this, op.add(get, that))
+  def ~-(that: Type)(implicit state: Context, op: SubOp[Type]): Context = state.set(this, op.sub(get, that))
+  def ~/(that: Type)(implicit state: Context, op: DivOp[Type]): Context = state.set(this, op.div(get, that))
+  def ~*(that: Type)(implicit state: Context, op: MulOp[Type]): Context = state.set(this, op.mul(get, that))
 
   val constraints = mutable.ListBuffer[ConstraintFunc[Type]]()
 
@@ -19,20 +19,20 @@ class Variable[Type, Context <: Environment] {
     this
   }
 
-  def validate(implicit state: State): Boolean = constraints.map(c => c(state.get(this))).reduce(_ & _)
+  def validate(implicit state: Context): Boolean = constraints.map(c => c(get)).reduce(_ & _)
 }
 
-class NamedVariable[T](val name: String) extends Variable[T]
+class NamedVariable[T, Context <: Environment[Context]](val name: String) extends Variable[T, Context]
 
 object Variable {
   type ConstraintFunc[T] = (T) => Boolean
 
-  def apply[T](): Variable[T] = new Variable[T]()
-  def apply[T](name: String): Variable[T] = new NamedVariable[T](name)
+  def apply[T](): Variable[T, State] = new Variable[T, State]()
+  def apply[T](name: String): Variable[T, State] = new NamedVariable[T, State](name)
 }
 
 object Argument {
-  def apply[T]() = new Variable[T]()
+  def apply[T]() = new Variable[T, Arguments]()
 }
 
 class AddOp[T](val add: (T, T) => T)

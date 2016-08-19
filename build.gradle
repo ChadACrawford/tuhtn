@@ -3,7 +3,7 @@ apply plugin: 'idea'
 apply plugin: 'scala'
 
 wrapper {
-  gradleVersion = 2.14
+  gradleVersion = 2.3
 }
 
 sourceSets {

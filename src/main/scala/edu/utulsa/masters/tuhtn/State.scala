@@ -2,9 +2,9 @@ package edu.utulsa.masters.tuhtn
 
 import scala.collection.mutable
 
-abstract class Environment {
-  def set[T](variable: Variable[T, _], value: T): Environment
-  def get[T](variable: Variable[T, _]): T
+abstract class Environment[Context <: Environment[Context]] {
+  def set[T](variable: Variable[T, Context], value: T): Context
+  def get[T](variable: Variable[T, Context]): T
 }
 
 abstract class State extends Environment[State] {
@@ -23,7 +23,7 @@ class CState(val variables: Map[Variable[_, State], Any]) extends State {
 
   override def set[T](variable: Variable[T, State], value: T): State = {
     variable match {
-      case svar: Variable[T, State] => new CState (Map (variables.toSeq: _*) += (svar -> value) )
+      case svar: Variable[T, State] => new CState (variables ++ Seq(svar -> value))
     }
   }
 
@@ -75,10 +75,11 @@ class Arguments extends Environment[Arguments] {
 
   val args = mutable.Map[Variable[_, Arguments], Any]()
 
-  override def set[T](variable: Variable[T, Arguments], value: T): Environment = {
+  override def set[T](variable: Variable[T, Arguments], value: T): Arguments = {
     args(variable) = value
     this
   }
+
   override def get[T](variable: Variable[T, Arguments]): T = {
     args(variable).asInstanceOf[T]
   }

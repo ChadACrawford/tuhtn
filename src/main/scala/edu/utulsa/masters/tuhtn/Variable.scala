@@ -1,16 +1,18 @@
 package edu.utulsa.masters.tuhtn
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
-class Variable[Type, Context <: Environment[Context]] {
+class Variable[Type: ClassTag] {
   import Variable._
 
-  def get(implicit state: Context): Type = state.get(this)
-  def ~(that: Type)(implicit state: Context): Context = state.set(this, that)
-  def ~+(that: Type)(implicit state: Context, op: AddOp[Type]): Context = state.set(this, op.add(get, that))
-  def ~-(that: Type)(implicit state: Context, op: SubOp[Type]): Context = state.set(this, op.sub(get, that))
-  def ~/(that: Type)(implicit state: Context, op: DivOp[Type]): Context = state.set(this, op.div(get, that))
-  def ~*(that: Type)(implicit state: Context, op: MulOp[Type]): Context = state.set(this, op.mul(get, that))
+  def get(implicit state: State): Type = state.get(this)
+
+  def ~(that: Type)(implicit state: State, update: Update): Update = update.set(this, that)
+  def ~+(that: Type)(implicit state: State, update: Update, op: AddOp[Type]): Update = update.set(this, op.add(get, that))
+  def ~-(that: Type)(implicit state: State, update: Update, op: SubOp[Type]): Update = update.set(this, op.sub(get, that))
+  def ~/(that: Type)(implicit state: State, update: Update, op: DivOp[Type]): Update = update.set(this, op.div(get, that))
+  def ~*(that: Type)(implicit state: State, update: Update, op: MulOp[Type]): Update = update.set(this, op.mul(get, that))
 
   val constraints = mutable.ListBuffer[ConstraintFunc[Type]]()
 
@@ -19,20 +21,26 @@ class Variable[Type, Context <: Environment[Context]] {
     this
   }
 
-  def validate(implicit state: Context): Boolean = constraints.map(c => c(get)).reduce(_ & _)
+  def validate(implicit state: State): Boolean = constraints.map(c => c(get)).reduce(_ & _)
+
+  def getType(implicit ct: ClassTag[Type]): Class[Type] = ct.runtimeClass.asInstanceOf[Class[Type]]
 }
 
-class NamedVariable[T, Context <: Environment[Context]](val name: String) extends Variable[T, Context]
+class NamedVariable[T: ClassTag](val name: String) extends Variable[T]
 
 object Variable {
   type ConstraintFunc[T] = (T) => Boolean
 
-  def apply[T](): Variable[T, State] = new Variable[T, State]()
-  def apply[T](name: String): Variable[T, State] = new NamedVariable[T, State](name)
-}
-
-object Argument {
-  def apply[T]() = new Variable[T, Arguments]()
+  def apply[T: ClassTag](value: T)(implicit state: State, update: Update): Variable[T] = {
+    val v = new Variable[T]()
+    v ~ value
+    v
+  }
+  def apply[T: ClassTag](name: String)(value: T)(implicit state: State, update: Update): Variable[T] = {
+    val v = new NamedVariable[T](name)
+    v ~ value
+    v
+  }
 }
 
 class AddOp[T](val add: (T, T) => T)

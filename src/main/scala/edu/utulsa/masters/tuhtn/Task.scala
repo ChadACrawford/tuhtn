@@ -2,35 +2,53 @@ package edu.utulsa.masters.tuhtn
 
 import scala.collection.mutable
 
-abstract class Task(val name: Symbol) {
-  def require(requirement: )
-  def precondition(state: CState): UState
+abstract class Task(val name: Symbol)(implicit tasks: mutable.ListBuffer[Task]) {
+  tasks.append(this)
+
+  implicit val args: Arguments = new Arguments()
+  private var prec: () => Unit = null
+  def precondition(f: () => Unit): this.type = {
+    this.prec = f
+    this
+  }
+
+  def valid(callArgs: Seq[Any]): Boolean = {
+    args.valid(callArgs)
+  }
 }
 
 object Task {
 }
 
-class PrimitiveTask(override val name: Symbol) extends Task(name) {
-  override def precondition(state: CState): UState
-  def postcondition(state: UState): UState
-}
-
-class CompoundTask(override val name: Symbol) extends Task(name) {
-  override def precondition(state: CState): UState
-
-  private val subtasks = mutable.ListBuffer[CallTask]()
-  def getSubtasks: Seq[CallTask] = subtasks
-}
-
-class CallTask (val name: Symbol, val args: Seq[Any])
-class CallTaskWithDependencies (override val name: Symbol, override val args: Seq[Any], val dependencies: Seq[Symbol])
-  extends CallTask(name, args)
-
-object CompoundTask {
-  protected def call(name: Symbol)(args: Any*)(implicit task: CompoundTask): Unit = {
-    task.subtasks append new CallTask(name, args)
+abstract class PrimitiveTask(override val name: Symbol)(implicit tasks: mutable.ListBuffer[Task]) extends Task(name) {
+  var post: () => Unit = null
+  def postcondition(f: () => Unit): this.type = {
+    this.post = f
+    this
   }
-  protected def call(name: Symbol)(args: Any*)(dependencies: Symbol*)(implicit task: CompoundTask): Unit = {
-    task.subtasks append new CallTaskWithDependencies(name, args, dependencies)
+
+  var cost = 0
+  def cost(cost: Int): this.type = {
+    this.cost = cost
+    this
+  }
+}
+
+abstract class CompoundTask(override val name: Symbol)(implicit tasks: mutable.ListBuffer[Task]) extends Task(name) {
+  private val subtasks = mutable.ListBuffer[CallTask]()
+  private class CallTask (val name: Symbol, val args: Seq[Variable[_]]) {
+    private var dependencies = Seq[Symbol]()
+    def depends(tasks: Seq[Symbol]): this.type = {
+      this.dependencies = tasks
+      this
+    }
+  }
+  def call(name: Symbol)(args: Variable[_]*): this.type = {
+    subtasks append new CallTask(name, args)
+    this
+  }
+  def call(name: Symbol)(args: Variable[_]*)(dependsOn: Symbol*) = {
+    subtasks append new CallTask(name, args).depends(dependsOn)
+    this
   }
 }

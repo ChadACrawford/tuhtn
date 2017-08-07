@@ -1,4 +1,4 @@
-package edu.utulsa.masters.tuhtn
+package edu.utulsa.planning.deterministic.htn
 
 import scala.collection.mutable
 
@@ -7,7 +7,7 @@ import scala.collection.mutable
   */
 class StateTemplate {
   val state = mutable.Map[Predicate[_], _]()
-  def register[T](q: Predicate[T], initialValue: T): Unit = {
+  def set[T](q: Predicate[T], initialValue: T): Unit = {
     state.put(q, initialValue)
   }
 }

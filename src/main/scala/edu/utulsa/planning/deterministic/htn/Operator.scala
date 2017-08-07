@@ -1,19 +1,9 @@
-package edu.utulsa.masters.tuhtn
+package edu.utulsa.planning.deterministic.htn
 
 /**
   * Created by chad on 6/26/17.
   */
-class Operator(val task: PrimitiveTask) {
-  var precondition: Precondition = null
-  var postcondition: (State) => State = null
-  def ?(precondition: Precondition): this.type = {
-    this.precondition = precondition
-    this
-  }
-  def ->(f: (State) => State): this.type = {
-    this.postcondition = f
-    this
-  }
+class Operator(val task: PrimitiveTask, val precondition: Precondition, val postcondition: Postcondition) {
 }
 
 //object Operator {

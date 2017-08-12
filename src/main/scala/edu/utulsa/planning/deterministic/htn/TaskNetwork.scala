@@ -1,8 +1,9 @@
 package edu.utulsa.planning.deterministic.htn
 
-import scala.collection.mutable
+class TaskNetwork(val root: Node) {
+}
 
-class TaskNetwork {
+object TaskNetwork {
   abstract class Node
   case class Branch(nodes: Seq[Node])
   case class Leaf(tasks: Seq[Task])

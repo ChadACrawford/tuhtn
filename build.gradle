@@ -1,9 +1,8 @@
-
 apply plugin: 'idea'
 apply plugin: 'scala'
 
 wrapper {
-  gradleVersion = 2.3
+  gradleVersion = 4.0
 }
 
 sourceSets {
@@ -26,4 +25,3 @@ repositories {
 dependencies {
     compile 'org.scala-lang:scala-library:2.11.8'
 }
-

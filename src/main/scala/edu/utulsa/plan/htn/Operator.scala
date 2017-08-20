@@ -5,11 +5,9 @@ class Operator
   val task: PrimitiveTask,
   val variables: Seq[Variable[_]],
   val precondition: Condition,
-  val postcondition: Map[Predicate[_], Operation[_]]
+  val postcondition: Map[Variable[_], Operation[_]]
 ) {
-  abstract class Result
-  case class Success(cost: Int) extends Result
-  case class Failure() extends Result
+  case class Result(newState: State, cost: Int)
 
-  def check(args: Arguments): Result = ???
+  def update(state: State, args: Arguments): Option[Result] = ???
 }

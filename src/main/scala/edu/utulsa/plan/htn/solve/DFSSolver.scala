@@ -1,12 +1,20 @@
 package edu.utulsa.plan.htn.solve
 
-import edu.utulsa.plan.htn.{FVFlag, Plan, Problem}
+import edu.utulsa.plan.htn._
 
 
-class SHOP2 extends Solver {
+class DFSSolver extends Solver {
+  override def solve(problem: Problem) = ???
+
+  def expand(task: Task, state: State): Functor = {
+    task match {
+      case CompoundTask() =>
+      case PrimitiveTask() =>
+    }
+  }
 }
 
-object SHOP2 {
+object DFSSolver {
   def solve(problem: Problem): Plan = ???
 
   object flags {

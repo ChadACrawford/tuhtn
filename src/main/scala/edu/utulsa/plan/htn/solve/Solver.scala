@@ -1,5 +1,7 @@
 package edu.utulsa.plan.htn.solve
 
-abstract class Solver {
+import edu.utulsa.plan.htn.{Plan, Problem}
 
+abstract class Solver {
+  def solve(problem: Problem): Plan
 }

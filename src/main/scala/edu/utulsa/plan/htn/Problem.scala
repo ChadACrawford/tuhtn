@@ -7,7 +7,7 @@ abstract class Problem(
   val tasks: Seq[Task],
   val methods: Seq[Method],
   val operators: Seq[Operator],
-  val condition: Condition
+  val constraints: operators.Expression[Boolean]
 ) {
   def initialState(): State = ???
   def stateIsValid(state: State): Boolean = ???
